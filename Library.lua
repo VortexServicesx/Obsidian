@@ -4494,7 +4494,7 @@ do
 
                 Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
                     TextTransparency = 0,
-                    BackgroundColor3 = Library.Scheme.BackgroundColor,
+                    BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 4),
                 })
                 Button.Tween:Play()
             end)
