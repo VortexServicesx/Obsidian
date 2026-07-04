@@ -8015,7 +8015,7 @@ function Library:CreateWindow(WindowInfo)
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
             Position = UDim2.fromScale(0.5, 0.5),
-            Size = UDim2.new(1, 30, 1, 30)
+            Size = UDim2.new(1, 30, 1, 30),
             ZIndex = 0,
             Image = "rbxassetid://6015897843",
             ImageColor3 = "AccentColor",
