@@ -1709,6 +1709,34 @@ function Library:AddOutline(Frame: GuiObject)
     return OutlineStroke, ShadowStroke
 end
 
+--// Roblox UI has no native blur, so an outer glow is approximated the same way
+--// AddOutline layers a border + shadow stroke: several stacked UIStrokes on Frame
+--// itself, with increasing thickness and decreasing opacity. Because UIStroke is a
+--// modifier (not a GuiObject), it renders outside Frame's own bounds without being
+--// counted by any UIListLayout the frame happens to sit in, and it auto-tracks
+--// Frame's size/corner radius with no extra syncing needed.
+function Library:AddGlow(Frame: GuiObject, Color: (Color3 | string)?, Intensity: number?, LayerCount: number?)
+    Color = Color or "AccentColor"
+    Intensity = math.clamp(Intensity or 0.6, 0, 1)
+    LayerCount = LayerCount or 5
+
+    local Strokes = {}
+    for i = 1, LayerCount do
+        local FalloffFromEdge = 1 - ((i - 1) / LayerCount)
+
+        local Stroke = New("UIStroke", {
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+            Color = Color,
+            Thickness = i * 1.5,
+            Transparency = 1 - (Intensity * FalloffFromEdge * 0.5),
+            Parent = Frame,
+        })
+        table.insert(Strokes, Stroke)
+    end
+
+    return Strokes
+end
+
 function Library:AddBlank(Frame: GuiObject, Size: UDim2)
     return New("Frame", {
         BackgroundTransparency = 1,
@@ -8519,10 +8547,25 @@ function Library:CreateWindow(WindowInfo)
             TabButton = New("TextButton", {
                 BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
+                ClipsDescendants = false,
                 Size = UDim2.new(1, 0, 0, 40),
                 Text = "",
                 Parent = Tabs,
             })
+
+            --// Vertical accent indicator beside the tab icon, hidden until the tab is active
+            local TabIndicator = New("Frame", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = "AccentColor",
+                Position = UDim2.new(0, 0, 0.5, 0),
+                Size = UDim2.new(0, 3, 0, 0),
+                Parent = TabButton,
+            })
+            New("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = TabIndicator,
+            })
+
             local ButtonPadding = New("UIPadding", {
                 PaddingBottom = UDim.new(0, IsCompact and 6 or 11),
                 PaddingLeft = UDim.new(0, IsCompact and 6 or 12),
@@ -8543,6 +8586,7 @@ function Library:CreateWindow(WindowInfo)
                 Parent = TabButton,
             })
 
+            local TabIconScale
             if Icon then
                 TabIcon = New("ImageLabel", {
                     Image = Icon.Url,
@@ -8554,6 +8598,10 @@ function Library:CreateWindow(WindowInfo)
                     Size = UDim2.fromScale(1, 1),
                     SizeConstraint = IsCompact and Enum.SizeConstraint.RelativeXY or Enum.SizeConstraint.RelativeYY,
                     Parent = TabButton,
+                })
+                TabIconScale = New("UIScale", {
+                    Scale = 1,
+                    Parent = TabIcon,
                 })
             end
 
@@ -9218,6 +9266,10 @@ function Library:CreateWindow(WindowInfo)
                 )
                 Library:AddOutline(GroupboxHolder)
 
+                if Info.Glow then
+                    Library:AddGlow(GroupboxHolder, Info.GlowColor, Info.GlowIntensity, Info.GlowLayers)
+                end
+
                 GroupboxLine = Library:MakeLine(GroupboxHolder, {
                     Position = UDim2.fromOffset(0, 34),
                     Size = UDim2.new(1, 0, 0, 1),
@@ -9258,7 +9310,7 @@ function Library:CreateWindow(WindowInfo)
                         ImageRectOffset = ArrowIcon and ArrowIcon.ImageRectOffset or Vector2.zero,
                         ImageRectSize = ArrowIcon and ArrowIcon.ImageRectSize or Vector2.zero,
                         BackgroundTransparency = 1,
-                        Rotation = 180,
+                        Rotation = 0, -- chevron-up, pointing up = expanded/open state
                         Position = UDim2.new(1, -(22 + 6), 0, 6),
                         Size = UDim2.fromOffset(22, 22),
                         Parent = GroupboxHolder,
@@ -9308,13 +9360,43 @@ function Library:CreateWindow(WindowInfo)
                 GroupboxLine.Visible = not Groupbox.Collapsed
             end
 
-            function Groupbox:SetCollapsed(Collapsed: boolean)
+            function Groupbox:SetCollapsed(Collapsed: boolean, DoNotAnimate: boolean?)
                 if Info.DisableCollapsing == true then return end
                 Groupbox.Collapsed = Collapsed
 
-                GroupboxContainer.Visible = not Collapsed
-                GroupboxCollapseArrow.Rotation = if Collapsed then 0 else 180
-                Groupbox:Resize()
+                local TargetHeight = if Collapsed then 34 else (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 49
+                local ArrowRotation = if Collapsed then 180 else 0 -- open = up, closed = down
+
+                if DoNotAnimate then
+                    GroupboxHolder.Size = UDim2.new(1, 0, 0, TargetHeight)
+                    GroupboxCollapseArrow.Rotation = ArrowRotation
+                    GroupboxContainer.Visible = not Collapsed
+                    GroupboxLine.Visible = not Collapsed
+                    return
+                end
+
+                if not Collapsed then
+                    GroupboxContainer.Visible = true
+                end
+
+                TweenService:Create(GroupboxHolder, Library.TweenInfo, {
+                    Size = UDim2.new(1, 0, 0, TargetHeight),
+                }):Play()
+                TweenService:Create(GroupboxCollapseArrow, Library.TweenInfo, {
+                    Rotation = ArrowRotation,
+                }):Play()
+
+                if Collapsed then
+                    task.delay(Library.TweenInfo.Time, function()
+                        if Groupbox.Destroyed then return end
+                        if Groupbox.Collapsed then
+                            GroupboxContainer.Visible = false
+                            GroupboxLine.Visible = false
+                        end
+                    end)
+                else
+                    GroupboxLine.Visible = true
+                end
             end
 
             function Groupbox:ToggleCollapsed()
@@ -9388,7 +9470,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             if Info.DisableCollapsing ~= true and Info.Collapsed == true then
-                Groupbox:SetCollapsed(true)
+                Groupbox:SetCollapsed(true, true)
             end
 
             return Groupbox
@@ -9432,7 +9514,19 @@ function Library:CreateWindow(WindowInfo)
                 TweenService:Create(TabIcon, Library.TweenInfo, {
                     ImageTransparency = 0,
                 }):Play()
+
+                --// Quick pop: overshoot slightly then settle back to 1
+                if TabIconScale then
+                    TabIconScale.Scale = 0.75
+                    TweenService:Create(TabIconScale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Scale = 1,
+                    }):Play()
+                end
             end
+
+            TweenService:Create(TabIndicator, Library.TweenInfo, {
+                Size = UDim2.new(0, 3, 0, 22),
+            }):Play()
 
             if Description then
                 Window:ShowTabInfo(Name, Description)
@@ -9460,6 +9554,9 @@ function Library:CreateWindow(WindowInfo)
                     ImageTransparency = 0.5,
                 }):Play()
             end
+            TweenService:Create(TabIndicator, Library.TweenInfo, {
+                Size = UDim2.new(0, 3, 0, 0),
+            }):Play()
             TabContainer.Visible = false
 
             Window:HideTabInfo()
@@ -9569,10 +9666,25 @@ function Library:CreateWindow(WindowInfo)
             TabButton = New("TextButton", {
                 BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
+                ClipsDescendants = false,
                 Size = UDim2.new(1, 0, 0, 40),
                 Text = "",
                 Parent = Tabs,
             })
+
+            --// Vertical accent indicator beside the tab icon, hidden until the tab is active
+            local TabIndicator = New("Frame", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = "AccentColor",
+                Position = UDim2.new(0, 0, 0.5, 0),
+                Size = UDim2.new(0, 3, 0, 0),
+                Parent = TabButton,
+            })
+            New("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = TabIndicator,
+            })
+
             local ButtonPadding = New("UIPadding", {
                 PaddingBottom = UDim.new(0, IsCompact and 6 or 11),
                 PaddingLeft = UDim.new(0, IsCompact and 6 or 12),
@@ -9593,6 +9705,7 @@ function Library:CreateWindow(WindowInfo)
                 Parent = TabButton,
             })
 
+            local TabIconScale
             if Icon then
                 TabIcon = New("ImageLabel", {
                     Image = Icon.Url,
@@ -9603,6 +9716,10 @@ function Library:CreateWindow(WindowInfo)
                     Size = UDim2.fromScale(1, 1),
                     SizeConstraint = IsCompact and Enum.SizeConstraint.RelativeXY or Enum.SizeConstraint.RelativeYY,
                     Parent = TabButton,
+                })
+                TabIconScale = New("UIScale", {
+                    Scale = 1,
+                    Parent = TabIcon,
                 })
             end
 
@@ -9764,7 +9881,17 @@ function Library:CreateWindow(WindowInfo)
                 TweenService:Create(TabIcon, Library.TweenInfo, {
                     ImageTransparency = 0,
                 }):Play()
+
+                if TabIconScale then
+                    TabIconScale.Scale = 0.75
+                    TweenService:Create(TabIconScale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Scale = 1,
+                    }):Play()
+                end
             end
+            TweenService:Create(TabIndicator, Library.TweenInfo, {
+                Size = UDim2.new(0, 3, 0, 22),
+            }):Play()
             TabContainer.Visible = true
 
             if Description then
@@ -9792,6 +9919,9 @@ function Library:CreateWindow(WindowInfo)
                     ImageTransparency = 0.5,
                 }):Play()
             end
+            TweenService:Create(TabIndicator, Library.TweenInfo, {
+                Size = UDim2.new(0, 3, 0, 0),
+            }):Play()
             TabContainer.Visible = false
 
             Window:HideTabInfo()
