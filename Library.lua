@@ -7972,7 +7972,6 @@ function Library:CreateWindow(WindowInfo)
     local BackgroundImage
     local BottomBackground
     local FooterLabel
-    local TabIndicator
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
     local IsCompact = WindowInfo.SidebarCompacted
@@ -8345,22 +8344,6 @@ function Library:CreateWindow(WindowInfo)
             Parent = Tabs,
         })
 
-        --// Tab Indicator (animated vertical pill that slides between tabs) \\--
-        TabIndicator = New("Frame", {
-            AnchorPoint = Vector2.new(0, 0),
-            BackgroundColor3 = "AccentColor",
-            Position = UDim2.fromOffset(4, 9),
-            Size = UDim2.fromOffset(3, 22),
-            Visible = false,
-            ZIndex = 5,
-            Parent = Tabs,
-        })
-        New("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = TabIndicator,
-        })
-        Library:AddToRegistry(TabIndicator, { BackgroundColor3 = "AccentColor" })
-
         --// Container \\--
         Container = New("Frame", {
             AnchorPoint = Vector2.new(1, 0),
@@ -8610,6 +8593,16 @@ function Library:CreateWindow(WindowInfo)
                 Padding = ButtonPadding,
                 Icon = TabIcon,
             })
+
+            local IndicatorLine = New("Frame", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = "AccentColor",
+                Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
+                Size = UDim2.fromOffset(3, 0), -- Starts collapsed
+                Parent = TabButton,
+            })
+            New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = IndicatorLine })
+            Library:AddToRegistry(IndicatorLine, { BackgroundColor3 = "AccentColor" })
 
             --// Tab Container \\--
             TabContainer = New("Frame", {
@@ -9495,18 +9488,9 @@ function Library:CreateWindow(WindowInfo)
 
             Library.ActiveTab = Tab
 
-            --// Animate tab indicator pill
-            if TabIndicator then
-                TabIndicator.Visible = true
-                task.defer(function()
-                    if Library.Unloaded then return end
-                    local RelY = TabButton.AbsolutePosition.Y - Tabs.AbsolutePosition.Y + Tabs.CanvasPosition.Y
-                    local CenterY = RelY + (TabButton.AbsoluteSize.Y * 0.5) - 11
-                    TweenService:Create(TabIndicator, Library.TweenInfo, {
-                        Position = UDim2.fromOffset(4, math.max(0, CenterY)),
-                    }):Play()
-                end)
-            end
+            TweenService:Create(IndicatorLine, Library.TweenInfo, {
+                Size = UDim2.fromOffset(3, 22),
+            }):Play()
 
             if Library.Searching then
                 Library:UpdateSearch(Library.SearchText)
@@ -9525,6 +9509,9 @@ function Library:CreateWindow(WindowInfo)
                     ImageTransparency = 0.5,
                 }):Play()
             end
+            TweenService:Create(IndicatorLine, Library.TweenInfo, {
+                Size = UDim2.fromOffset(3, 0),
+            }):Play()
             TabContainer.Visible = false
 
             Window:HideTabInfo()
@@ -9676,6 +9663,16 @@ function Library:CreateWindow(WindowInfo)
                 Padding = ButtonPadding,
                 Icon = TabIcon,
             })
+
+            local IndicatorLine = New("Frame", {
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = "AccentColor",
+                Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
+                Size = UDim2.fromOffset(3, 0), -- Starts collapsed
+                Parent = TabButton,
+            })
+            New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = IndicatorLine })
+            Library:AddToRegistry(IndicatorLine, { BackgroundColor3 = "AccentColor" })
 
             --// Tab Container \\--
             TabContainer = New("ScrollingFrame", {
@@ -9840,18 +9837,9 @@ function Library:CreateWindow(WindowInfo)
 
             Library.ActiveTab = Tab
 
-            --// Animate tab indicator pill
-            if TabIndicator then
-                TabIndicator.Visible = true
-                task.defer(function()
-                    if Library.Unloaded then return end
-                    local RelY = TabButton.AbsolutePosition.Y - Tabs.AbsolutePosition.Y + Tabs.CanvasPosition.Y
-                    local CenterY = RelY + (TabButton.AbsoluteSize.Y * 0.5) - 11
-                    TweenService:Create(TabIndicator, Library.TweenInfo, {
-                        Position = UDim2.fromOffset(4, math.max(0, CenterY)),
-                    }):Play()
-                end)
-            end
+            TweenService:Create(IndicatorLine, Library.TweenInfo, {
+                Size = UDim2.fromOffset(3, 22),
+            }):Play()
 
             if Library.Searching then
                 Library:UpdateSearch(Library.SearchText)
@@ -9870,6 +9858,9 @@ function Library:CreateWindow(WindowInfo)
                     ImageTransparency = 0.5,
                 }):Play()
             end
+            TweenService:Create(IndicatorLine, Library.TweenInfo, {
+                Size = UDim2.fromOffset(3, 0),
+            }):Play()
             TabContainer.Visible = false
 
             Window:HideTabInfo()
