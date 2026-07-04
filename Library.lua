@@ -8544,6 +8544,7 @@ function Library:CreateWindow(WindowInfo)
         local TabContainer
         local TabLeft
         local TabRight
+        local IndicatorLine
 
         Icon = Library:GetCustomIcon(Icon)
         do
@@ -8594,7 +8595,7 @@ function Library:CreateWindow(WindowInfo)
                 Icon = TabIcon,
             })
 
-            local IndicatorLine = New("Frame", {
+            IndicatorLine = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "AccentColor",
                 Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
@@ -9615,6 +9616,7 @@ function Library:CreateWindow(WindowInfo)
         local TabIcon
 
         local TabContainer
+        local IndicatorLine
 
         Icon = if Icon == "key" then KeyIcon else Library:GetCustomIcon(Icon)
         do
@@ -9664,7 +9666,7 @@ function Library:CreateWindow(WindowInfo)
                 Icon = TabIcon,
             })
 
-            local IndicatorLine = New("Frame", {
+            IndicatorLine = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "AccentColor",
                 Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
