@@ -4494,6 +4494,7 @@ do
 
                 Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
                     TextTransparency = 0,
+                    BackgroundColor3 = Library.Scheme.BackgroundColor,
                 })
                 Button.Tween:Play()
             end)
@@ -4504,6 +4505,7 @@ do
 
                 Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
                     TextTransparency = 0.4,
+                    BackgroundColor3 = Library.Scheme.MainColor,
                 })
                 Button.Tween:Play()
             end)
@@ -8598,7 +8600,7 @@ function Library:CreateWindow(WindowInfo)
             IndicatorLine = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "AccentColor",
-                Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
+                Position = UDim2.new(0, -8, 0.5, 0), -- Centered vertically in the 40px tall button, 8px to the left
                 Size = UDim2.fromOffset(3, 0), -- Starts collapsed
                 Parent = TabButton,
             })
@@ -9669,7 +9671,7 @@ function Library:CreateWindow(WindowInfo)
             IndicatorLine = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "AccentColor",
-                Position = UDim2.fromOffset(-8, 20), -- Centered vertically in the 40px tall button, 8px to the left
+                Position = UDim2.new(0, -8, 0.5, 0), -- Centered vertically in the 40px tall button, 8px to the left
                 Size = UDim2.fromOffset(3, 0), -- Starts collapsed
                 Parent = TabButton,
             })
