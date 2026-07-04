@@ -4494,7 +4494,7 @@ do
 
                 Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
                     TextTransparency = 0,
-                    BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, 4),
+                    BackgroundColor3 = Library:GetBetterColor(Library.Scheme.MainColor, -2),
                 })
                 Button.Tween:Play()
             end)
@@ -8010,36 +8010,21 @@ function Library:CreateWindow(WindowInfo)
             })
         )
         Library:AddOutline(MainFrame)
-
         --// Outer Glow \\--
-        local GlowInner = New("Frame", {
-            AnchorPoint = Vector2.new(0, 0),
-            BackgroundColor3 = "AccentColor",
-            BackgroundTransparency = 0.82,
-            Position = UDim2.fromOffset(-8, -8),
-            Size = UDim2.new(1, 16, 1, 16),
+        local Glow = New("ImageLabel", {
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0.5, 0.5),
+            Size = UDim2.new(1, 30, 1, 30),
             ZIndex = 0,
+            Image = "rbxassetid://6015897843",
+            ImageColor3 = "AccentColor",
+            ImageTransparency = 0.2,
+            ScaleType = Enum.ScaleType.Slice,
+            SliceCenter = Rect.new(10, 10, 190, 190),
             Parent = MainFrame,
         })
-        New("UICorner", {
-            CornerRadius = UDim.new(0, WindowInfo.CornerRadius + 4),
-            Parent = GlowInner,
-        })
-        local GlowOuter = New("Frame", {
-            AnchorPoint = Vector2.new(0, 0),
-            BackgroundColor3 = "AccentColor",
-            BackgroundTransparency = 0.91,
-            Position = UDim2.fromOffset(-16, -16),
-            Size = UDim2.new(1, 32, 1, 32),
-            ZIndex = 0,
-            Parent = MainFrame,
-        })
-        New("UICorner", {
-            CornerRadius = UDim.new(0, WindowInfo.CornerRadius + 10),
-            Parent = GlowOuter,
-        })
-        Library:AddToRegistry(GlowInner, { BackgroundColor3 = "AccentColor" })
-        Library:AddToRegistry(GlowOuter, { BackgroundColor3 = "AccentColor" })
+        Library:AddToRegistry(Glow, { ImageColor3 = "AccentColor" })
 
         Library:MakeLine(MainFrame, {
             Position = UDim2.fromOffset(0, 48),
